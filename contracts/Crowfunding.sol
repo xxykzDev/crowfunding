@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
-contract Crowdfunding {
+import "@openzeppelin/contracts/access/AccessControl.sol";
+
+contract Crowdfunding is AccessControl {
     address public owner;
 
     struct Funder {
@@ -23,16 +25,22 @@ contract Crowdfunding {
 
     Proposal[] public proposals;
 
+    bytes32 public constant BUILDER_ROLE = keccak256("BUILDER_ROLE");
+
     constructor() {
         owner = msg.sender;
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    modifier onlyOwner {
-        require(msg.sender == owner, "Only owner can call this function.");
-        _;
+    function grantBuilder(address _builder) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        grantRole(BUILDER_ROLE, _builder);
     }
 
-    function newProposal(string memory _name, string memory _description, address payable _recipient, uint _value, uint _duration) public onlyOwner {
+    function revokeBuilder(address _builder) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        revokeRole(BUILDER_ROLE, _builder);
+    }
+
+    function newProposal(string memory _name, string memory _description, address payable _recipient, uint _value, uint _duration) public onlyRole(BUILDER_ROLE) {
         Proposal storage newProp = proposals.push();
         newProp.name = _name;
         newProp.description = _description;
