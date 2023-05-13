@@ -2,9 +2,11 @@
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import "./DAOFactory.sol";
 
-contract Crowdfunding is AccessControl {
+contract Crowdfunding is AccessControl{
     address public owner;
+    FactoryDAO public daoFactory;  // Actualiza el nombre del contrato aquí
 
     struct Funder {
         address contributor;
@@ -14,7 +16,6 @@ contract Crowdfunding is AccessControl {
     struct Proposal {
         string name;
         string description;
-        address payable recipient;
         uint value;
         uint deadline;
         uint received;
@@ -27,10 +28,13 @@ contract Crowdfunding is AccessControl {
 
     bytes32 public constant BUILDER_ROLE = keccak256("BUILDER_ROLE");
 
-    constructor() {
+    constructor(FactoryDAO _daoFactory) {  
         owner = msg.sender;
+        daoFactory = _daoFactory;
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
+        receive() external payable {}
+
 
     function grantBuilder(address _builder) public onlyRole(DEFAULT_ADMIN_ROLE) {
         grantRole(BUILDER_ROLE, _builder);
@@ -40,11 +44,10 @@ contract Crowdfunding is AccessControl {
         revokeRole(BUILDER_ROLE, _builder);
     }
 
-    function newProposal(string memory _name, string memory _description, address payable _recipient, uint _value, uint _duration) public onlyRole(BUILDER_ROLE) {
+    function newProposal(string memory _name, string memory _description, uint _value, uint _duration) public onlyRole(BUILDER_ROLE) {
         Proposal storage newProp = proposals.push();
         newProp.name = _name;
         newProp.description = _description;
-        newProp.recipient = _recipient;
         newProp.value = _value;
         newProp.deadline = block.timestamp + _duration;
         newProp.received = 0;
@@ -54,7 +57,6 @@ contract Crowdfunding is AccessControl {
     function contribute(uint _proposal) public payable {
         Proposal storage p = proposals[_proposal];
         require(block.timestamp < p.deadline);
-        require(p.received + msg.value <= p.value);
         require(msg.value >= 0.01 ether);
         
         p.contributions[msg.sender] += msg.value;
@@ -77,10 +79,18 @@ contract Crowdfunding is AccessControl {
                 require(!p.funded);
 
                 p.funded = true;
-                p.recipient.transfer(p.received);
+                
+                // Crear un nuevo DAO con los miembros y los fondos de la propuesta
+                address[] memory members = new address[](p.funders.length);
+                for(uint i = 0; i < p.funders.length; i++) {
+                    members[i] = p.funders[i].contributor;
+                }
+
+                daoFactory.createDAO(members, p.received);
             }
         }
     }
+
 
     function refund(uint _proposal, address _contributor) public {
         Proposal storage p = proposals[_proposal];

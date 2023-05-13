@@ -1,23 +1,35 @@
-// We require the Hardhat Runtime Environment explicitly here. This is optional
-// but useful for running the script in a standalone fashion through `node <script>`.
-//
-// You can also run a script with `npx hardhat run <script>`. If you do that, Hardhat
-// will compile your contracts, add the Hardhat Runtime Environment's members to the
-// global scope, and execute the script.
-const hre = require("hardhat");
+const { ethers } = require("hardhat");
 
 async function main() {
-  const Crowdfunding = await hre.ethers.getContractFactory("Crowdfunding");
-  const crowdfunding = await Crowdfunding.deploy();
+  // Obtén la cuenta que desplegará el contrato
+  const [deployer] = await ethers.getSigners();
+
+  console.log("Desplegando contratos con la cuenta:", deployer.address);
+
+  // Dirección del contrato DAOFactory deployado previamente
+  const daoFactoryAddress = "0x7fc97d238dcA409802518280537228Aea9d433bF";
+
+  // Crea una instancia del contrato DAOFactory
+  const DAOFactory = await ethers.getContractFactory("FactoryDAO");
+  const daoFactory = DAOFactory.attach(daoFactoryAddress);
+
+  // Despliega el contrato Crowdfunding
+  const Crowdfunding = await ethers.getContractFactory("Crowdfunding");
+  const crowdfunding = await Crowdfunding.deploy(daoFactory.address);
 
   await crowdfunding.deployed();
 
-  console.log(
-    `Crowdfunding with deployed to ${crowdfunding.address}`
-  );
+  console.log("Crowdfunding desplegado en:", crowdfunding.address);
+
+  await deployer.sendTransaction({
+    to: crowdfunding.address,
+    value: ethers.utils.parseEther("0.1")
+  });
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+main()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
