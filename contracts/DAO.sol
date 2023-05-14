@@ -8,7 +8,7 @@ contract DAO {
 
     constructor(address[] memory _members, uint _totalFunds) {
         for (uint i = 0; i < _members.length; i++) {
-            members.push(_members[i]);
+            members.push(_members[i]);  
             isMember[_members[i]] = true;
         }
 
@@ -25,5 +25,10 @@ contract DAO {
 
     function getMembers() public view returns (address[] memory) {
         return members;
+    }
+    
+    // This function will get called when the contract receives Ether without any data
+    receive() external payable {
+        totalFunds += msg.value;
     }
 }

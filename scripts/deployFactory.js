@@ -17,7 +17,7 @@ async function main() {
   // Envía 0.1 ETH al contrato DAOFactory
   await deployer.sendTransaction({
     to: daoFactory.address,
-    value: ethers.utils.parseEther("0.1")
+    value: ethers.utils.parseEther("0.03")
   });
 
   const balance = await ethers.provider.getBalance(daoFactory.address);

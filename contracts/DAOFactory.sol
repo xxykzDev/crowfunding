@@ -7,10 +7,12 @@ contract FactoryDAO {
     uint public initialBalance;
     address[] public deployedDAOs;
 
-    function createDAO(address[] memory _members, uint _totalFunds) public {
-        address newDAO = address(new DAO(_members, _totalFunds));
-        deployedDAOs.push(newDAO);
+    function createDAO(address[] memory _members, uint _totalFunds) public returns (address) {
+        DAO newDAO = new DAO(_members, _totalFunds);
+        deployedDAOs.push(address(newDAO));
+        return address(newDAO);
     }
+
 
     function getDeployedDAOs() public view returns (address[] memory) {
         return deployedDAOs;

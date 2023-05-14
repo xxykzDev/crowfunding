@@ -1,7 +1,7 @@
 const { ethers } = require("hardhat");
 
 async function main() {
-  const daoAddress = "0x5aCa9a29c87EF57e57131e1fBFf7359DC0e5eFcD";
+  const daoAddress = "0x08C02728Aab919F9EA152AE39950fDF8F71eb51C";
 
   const DAO = await ethers.getContractFactory("DAO");
   

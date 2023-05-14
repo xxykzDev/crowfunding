@@ -7,7 +7,7 @@ async function main() {
   console.log("Desplegando contratos con la cuenta:", deployer.address);
 
   // Dirección del contrato DAOFactory deployado previamente
-  const daoFactoryAddress = "0x7fc97d238dcA409802518280537228Aea9d433bF";
+  const daoFactoryAddress = "0xDeD4dEEb738929D253596a6A7EFD5cEF9f367211";
 
   // Crea una instancia del contrato DAOFactory
   const DAOFactory = await ethers.getContractFactory("FactoryDAO");
@@ -23,7 +23,7 @@ async function main() {
 
   await deployer.sendTransaction({
     to: crowdfunding.address,
-    value: ethers.utils.parseEther("0.1")
+    value: ethers.utils.parseEther("0.01")
   });
 }
 

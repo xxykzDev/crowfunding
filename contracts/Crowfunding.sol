@@ -33,8 +33,8 @@ contract Crowdfunding is AccessControl{
         daoFactory = _daoFactory;
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
-        receive() external payable {}
-
+    
+    receive() external payable {}
 
     function grantBuilder(address _builder) public onlyRole(DEFAULT_ADMIN_ROLE) {
         grantRole(BUILDER_ROLE, _builder);
@@ -66,7 +66,7 @@ contract Crowdfunding is AccessControl{
         checkProposal(_proposal);
     }
 
-    function checkProposal(uint _proposal) public {
+        function checkProposal(uint _proposal) public {
         Proposal storage p = proposals[_proposal];
 
         if(block.timestamp >= p.deadline) {
@@ -79,17 +79,26 @@ contract Crowdfunding is AccessControl{
                 require(!p.funded);
 
                 p.funded = true;
-                
+                    
                 // Crear un nuevo DAO con los miembros y los fondos de la propuesta
                 address[] memory members = new address[](p.funders.length);
                 for(uint i = 0; i < p.funders.length; i++) {
                     members[i] = p.funders[i].contributor;
                 }
 
-                daoFactory.createDAO(members, p.received);
+                address newDAOAddress = daoFactory.createDAO(members, p.received);
+                    
+                // Verificar que la dirección del nuevo DAO es válida
+                require(newDAOAddress != address(0), "Invalid DAO address");
+
+                // Enviar fondos a la nueva DAO
+                (bool success, ) = payable(newDAOAddress).call{value: p.received}("");
+                require(success, "Transfer to DAO failed");
             }
         }
     }
+
+    
 
 
     function refund(uint _proposal, address _contributor) public {
