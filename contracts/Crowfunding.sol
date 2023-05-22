@@ -4,51 +4,76 @@ pragma solidity ^0.8.9;
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "./DAOFactory.sol";
 
-contract Crowdfunding is AccessControl{
+contract Crowdfunding is AccessControl {
     address public owner;
-    FactoryDAO public daoFactory;  // Actualiza el nombre del contrato aquí
+    FactoryDAO public daoFactory; // Actualiza el nombre del contrato aquí
 
     struct Funder {
         address contributor;
         uint amount;
     }
 
+    struct Location {
+        string country;
+        string state;
+        string city;
+        string proposalAddress;
+    }
+
     struct Proposal {
         string name;
-        string description;
+        string shortDescription;
+        string longDescription;
+        string estimatedRevenue;
         uint value;
         uint deadline;
         uint received;
         bool funded;
+        Location location;
         Funder[] funders;
-        mapping (address => uint) contributions;
+        mapping(address => uint) contributions;
     }
 
     Proposal[] public proposals;
 
     bytes32 public constant BUILDER_ROLE = keccak256("BUILDER_ROLE");
 
-    constructor(FactoryDAO _daoFactory) {  
+    constructor(FactoryDAO _daoFactory) {
         owner = msg.sender;
         daoFactory = _daoFactory;
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
-    
+
     receive() external payable {}
 
-    function grantBuilder(address _builder) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function grantBuilder(
+        address _builder
+    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
         grantRole(BUILDER_ROLE, _builder);
     }
 
-    function revokeBuilder(address _builder) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function revokeBuilder(
+        address _builder
+    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
         revokeRole(BUILDER_ROLE, _builder);
     }
 
-    function newProposal(string memory _name, string memory _description, uint _value, uint _duration) public onlyRole(BUILDER_ROLE) {
+    function newProposal(
+        string memory _name,
+        string memory _shortDescription,
+        string memory _longDescription,
+        string memory _estimatedRevenue,
+        Location memory _location,
+        uint _value,
+        uint _duration
+    ) public onlyRole(BUILDER_ROLE) {
         Proposal storage newProp = proposals.push();
         newProp.name = _name;
-        newProp.description = _description;
+        newProp.shortDescription = _shortDescription;
+        newProp.longDescription = _longDescription;
+        newProp.estimatedRevenue = _estimatedRevenue;
         newProp.value = _value;
+        newProp.location = _location;
         newProp.deadline = block.timestamp + _duration;
         newProp.received = 0;
         newProp.funded = false;
@@ -58,7 +83,7 @@ contract Crowdfunding is AccessControl{
         Proposal storage p = proposals[_proposal];
         require(block.timestamp < p.deadline);
         require(msg.value >= 0.01 ether);
-        
+
         p.contributions[msg.sender] += msg.value;
         p.funders.push(Funder({contributor: msg.sender, amount: msg.value}));
         p.received += msg.value;
@@ -66,12 +91,12 @@ contract Crowdfunding is AccessControl{
         checkProposal(_proposal);
     }
 
-        function checkProposal(uint _proposal) public {
+    function checkProposal(uint _proposal) public {
         Proposal storage p = proposals[_proposal];
 
-        if(block.timestamp >= p.deadline) {
-            if(p.received < p.value) {
-                for(uint i = 0; i < p.funders.length; i++) {
+        if (block.timestamp >= p.deadline) {
+            if (p.received < p.value) {
+                for (uint i = 0; i < p.funders.length; i++) {
                     refund(_proposal, p.funders[i].contributor);
                 }
             } else {
@@ -79,27 +104,29 @@ contract Crowdfunding is AccessControl{
                 require(!p.funded);
 
                 p.funded = true;
-                    
+
                 // Crear un nuevo DAO con los miembros y los fondos de la propuesta
                 address[] memory members = new address[](p.funders.length);
-                for(uint i = 0; i < p.funders.length; i++) {
+                for (uint i = 0; i < p.funders.length; i++) {
                     members[i] = p.funders[i].contributor;
                 }
 
-                address newDAOAddress = daoFactory.createDAO(members, p.received);
-                    
+                address newDAOAddress = daoFactory.createDAO(
+                    members,
+                    p.received
+                );
+
                 // Verificar que la dirección del nuevo DAO es válida
                 require(newDAOAddress != address(0), "Invalid DAO address");
 
                 // Enviar fondos a la nueva DAO
-                (bool success, ) = payable(newDAOAddress).call{value: p.received}("");
+                (bool success, ) = payable(newDAOAddress).call{
+                    value: p.received
+                }("");
                 require(success, "Transfer to DAO failed");
             }
         }
     }
-
-    
-
 
     function refund(uint _proposal, address _contributor) public {
         Proposal storage p = proposals[_proposal];
