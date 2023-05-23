@@ -7,7 +7,7 @@ async function main() {
   console.log("Desplegando contratos con la cuenta:", deployer.address);
 
   // Dirección del contrato DAOFactory deployado previamente
-  const daoFactoryAddress = "0xDeD4dEEb738929D253596a6A7EFD5cEF9f367211";
+  const daoFactoryAddress = "0xCE5DC8F3b769645E6880F0208f7ed1c725512ac6";
 
   // Crea una instancia del contrato DAOFactory
   const DAOFactory = await ethers.getContractFactory("FactoryDAO");

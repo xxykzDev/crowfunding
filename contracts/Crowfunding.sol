@@ -36,6 +36,10 @@ contract Crowdfunding is AccessControl {
 
     Proposal[] public proposals;
 
+    function getTotalProposals() public view returns (uint) {
+        return proposals.length;
+    }
+
     bytes32 public constant BUILDER_ROLE = keccak256("BUILDER_ROLE");
 
     constructor(FactoryDAO _daoFactory) {
@@ -128,7 +132,7 @@ contract Crowdfunding is AccessControl {
         }
     }
 
-    function refund(uint _proposal, address _contributor) public {
+    function refund(uint _proposal, address _contributor) internal {
         Proposal storage p = proposals[_proposal];
         require(block.timestamp >= p.deadline);
         require(p.received < p.value);
