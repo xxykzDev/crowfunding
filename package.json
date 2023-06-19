@@ -8,5 +8,12 @@
     "@nomiclabs/hardhat-waffle": "^2.0.5",
     "@openzeppelin/contracts": "^4.8.3",
     "dotenv": "^16.0.3"
+  },
+  "scripts": {
+    "compile": "hardhat compile",
+    "deployCrowfunding": "hardhat run --network sepolia ./scripts/deploy.js",
+    "deployFactory": "hardhat run --network sepolia ./scripts/deployFactory.js",
+    "deploy": "npm run deployFactory && npm run deployCrowfunding",
+    "test": "npx hardhat test"
   }
 }
