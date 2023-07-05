@@ -7,7 +7,7 @@ Try running some of the following tasks:
 HOW START AND DEPLOY THE REPO
 
 ```shell
-npm run deployFactory
+npm run deploy
 REPORT_GAS=true npx hardhat test
 npx hardhat node
 npx hardhat run scripts/deploy.js
